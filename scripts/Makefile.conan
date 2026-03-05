@@ -1,0 +1,54 @@
+# Centralized conan build configuration for all CI pipelines.
+# Single source of truth for conan install flags -- update HERE, not in each pipeline file.
+#
+# Must be invoked from the build/ directory:
+#   mkdir build && cd build && make -f ../scripts/Makefile.conan <target> [OPTIONS]
+#
+# Targets:
+#   conan         conan install + conan build (default)
+#   conan-install conan install only (no build)
+#
+# Options (set on command line):
+#   GPU=1        Enable cuVS GPU support
+#   CARDINAL=1   Enable Cardinal support
+#   UT=1         Enable unit tests
+#   ASAN=1       Enable address sanitizer
+#   CPU=1        Add CPU-specific flags (--build=liburing)
+#   RELEASE=1    Set build type to Release
+#   NO_CPPSTD=1  Omit -s compiler.cppstd=17 (for legacy release pipelines)
+
+# Base flags (always applied)
+CONAN_FLAGS := --update --build=missing -s compiler.libcxx=libstdc++11 -o with_diskann=True
+
+ifdef GPU
+CONAN_FLAGS += -o with_cuvs=True
+endif
+ifdef CARDINAL
+CONAN_FLAGS += -o with_cardinal=True
+endif
+ifdef UT
+CONAN_FLAGS += -o with_ut=True
+endif
+ifdef ASAN
+CONAN_FLAGS += -o with_asan=True
+endif
+ifdef CPU
+CONAN_FLAGS += --build=liburing
+endif
+ifdef RELEASE
+CONAN_FLAGS += -s build_type=Release
+endif
+ifndef NO_CPPSTD
+CONAN_FLAGS += -s compiler.cppstd=17
+endif
+
+.DEFAULT_GOAL := conan
+
+.PHONY: conan conan-install
+
+conan: conan-install
+	conan build ..
+
+conan-install:
+	@echo "[Makefile.conan] conan install .. $(CONAN_FLAGS)"
+	conan install .. $(CONAN_FLAGS)
