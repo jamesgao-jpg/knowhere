@@ -37,6 +37,26 @@ LoadConfig(BaseConfig* cfg, const Json& json, knowhere::PARAM_TYPE param_type, c
     return Config::Load(*cfg, json_, param_type, msg);
 }
 
+#if defined(NOT_COMPILE_FOR_SWIG) && !defined(KNOWHERE_WITH_LIGHT)
+inline void
+UseSpanAsTraceParent(BaseConfig& cfg, const std::shared_ptr<tracer::trace::Span>& span) {
+    if (span == nullptr) {
+        return;
+    }
+
+    auto span_ctx = span->GetContext();
+    if (!span_ctx.IsValid()) {
+        return;
+    }
+
+    auto trace_id = span_ctx.trace_id().Id();
+    auto span_id = span_ctx.span_id().Id();
+    cfg.trace_id = tracer::BytesToHexStr(trace_id.data(), trace_id.size());
+    cfg.span_id = tracer::BytesToHexStr(span_id.data(), span_id.size());
+    cfg.trace_flags = static_cast<int32_t>(span_ctx.trace_flags().flags());
+}
+#endif
+
 #ifdef KNOWHERE_WITH_CARDINAL
 template <typename T>
 inline const std::shared_ptr<Interrupt>
@@ -145,7 +165,7 @@ Index<T>::Search(const DataSetPtr dataset, const Json& json, const BitsetView& b
     }
 
 #if defined(NOT_COMPILE_FOR_SWIG) && !defined(KNOWHERE_WITH_LIGHT)
-    const BaseConfig& b_cfg = static_cast<const BaseConfig&>(*cfg);
+    BaseConfig& b_cfg = static_cast<BaseConfig&>(*cfg);
     // LCOV_EXCL_START
     std::shared_ptr<tracer::trace::Span> span = nullptr;
     if (b_cfg.trace_id.has_value()) {
@@ -160,6 +180,7 @@ Index<T>::Search(const DataSetPtr dataset, const Json& json, const BitsetView& b
         span->SetAttribute(meta::ROWS, Count());
         span->SetAttribute(meta::DIM, Dim());
         span->SetAttribute(meta::NQ, dataset->GetRows());
+        UseSpanAsTraceParent(b_cfg, span);
     }
     // LCOV_EXCL_STOP
 
