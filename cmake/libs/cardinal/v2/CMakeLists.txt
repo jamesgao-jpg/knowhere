@@ -1,9 +1,8 @@
 cmake_minimum_required(VERSION 3.26.4 FATAL_ERROR)
 project(knowhere CXX C)
 
-# Use short SHA1 as version
-# currenly checkout a commit for cardinal v2. TODO: need a tag here
-set(CARDINAL_VERSION v3.0.9)
+# Pin the Cardinal v2 commit from zilliztech/cardinal:monitor-cancelled-search-metrics.
+set(CARDINAL_VERSION dd7594d7007cf41f60f50d77fa9a34a4562da1a0)
 set(CARDINAL_REPO_URL "https://github.com/zilliztech/cardinal.git")
 
 set(CARDINAL_ROOT  "${KNOWHERE_THRID_ROOT}/cardinalv2")
