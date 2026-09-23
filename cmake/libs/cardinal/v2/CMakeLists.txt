@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.26.4 FATAL_ERROR)
 project(knowhere CXX C)
 
 # Pin the Cardinal v2 commit from zilliztech/cardinal:monitor-cancelled-search-metrics.
-set(CARDINAL_VERSION dd7594d7007cf41f60f50d77fa9a34a4562da1a0)
+set(CARDINAL_VERSION 357d8efe648edf75bb6d707dc2e17d36956f9431)
 set(CARDINAL_REPO_URL "https://github.com/zilliztech/cardinal.git")
 
 set(CARDINAL_ROOT  "${KNOWHERE_THRID_ROOT}/cardinalv2")
