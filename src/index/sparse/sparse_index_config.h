@@ -66,6 +66,7 @@ class SparseInvertedIndexConfig : public BaseConfig {
     CFG_STRING inverted_index_codec;
     CFG_STRING search_algo;
     CFG_STRING quant_type;
+    CFG_FLOAT bm25_u8_max_overflow_ratio;
     CFG_INT sindi_window_size;
 
     KNOWHERE_DECLARE_CONFIG(SparseInvertedIndexConfig) {
@@ -156,11 +157,23 @@ class SparseInvertedIndexConfig : public BaseConfig {
             .for_deserialize()
             .for_deserialize_from_file();
         KNOWHERE_CONFIG_DECLARE_FIELD(quant_type)
-            .description("quantization type for posting list values: fp16/fp32 for IP, u16/u32 for BM25")
+            .description(
+                "quantization type for posting list values: fp16/fp32 for IP, u8/u16/u32/auto for BM25; u8 is "
+                "supported only by sealed SINDI with index version >= 11; BM25 auto requires index version >= 11 "
+                "and resolves to u8/u16 for sealed SINDI or u16 for other indexes; the concrete type is persisted "
+                "in the index and restored automatically on load; the load parameter is used only for legacy "
+                "files without posting-type metadata")
             .allow_empty_without_default()
             .for_train()
             .for_deserialize()
             .for_deserialize_from_file();
+        KNOWHERE_CONFIG_DECLARE_FIELD(bm25_u8_max_overflow_ratio)
+            .description(
+                "maximum overflow-posting ratio at which SINDI BM25 quant_type=auto selects restore-u8; 0.0001 "
+                "means 0.01%")
+            .set_default(0.0001f)
+            .set_range(0.0f, 1.0f)
+            .for_train();
         KNOWHERE_CONFIG_DECLARE_FIELD(sindi_window_size)
             .description("window size for sindi inverted index")
             .set_range(1024, 65535)
@@ -185,6 +198,16 @@ class SparseInvertedIndexConfig : public BaseConfig {
                                    "block_adaptive]",
                                Status::invalid_args);
         }
+        // On load, the serialized type takes precedence. Validate the caller's
+        // quant_type later, only if a legacy file actually needs that parameter.
+        if (param_type & (DESERIALIZE | DESERIALIZE_FROM_FILE)) {
+            return Status::success;
+        }
+        return ValidateQuantType(err_msg);
+    }
+
+    Status
+    ValidateQuantType(std::string* err_msg) const {
         if (quant_type.has_value() && !quant_type.value().empty()) {
             auto qt = quant_type.value();
             auto mt = metric_type.value();
@@ -196,9 +219,9 @@ class SparseInvertedIndexConfig : public BaseConfig {
                     return Status::invalid_args;
                 }
             } else if (mt == metric::BM25) {
-                if (qt != "u16" && qt != "u32") {
+                if (qt != "u8" && qt != "u16" && qt != "u32" && qt != "auto") {
                     if (err_msg) {
-                        *err_msg = "quant_type for BM25 metric must be 'u16' or 'u32', got '" + qt + "'";
+                        *err_msg = "quant_type for BM25 metric must be 'u8', 'u16', 'u32', or 'auto', got '" + qt + "'";
                     }
                     return Status::invalid_args;
                 }

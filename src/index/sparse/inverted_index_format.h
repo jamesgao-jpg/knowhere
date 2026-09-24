@@ -5,18 +5,71 @@
 #include <cassert>
 #include <cstddef>
 #include <cstdint>
+#include <cstring>
 #include <limits>
+#include <optional>
+#include <type_traits>
 #include <vector>
 
 #include "io/memory_io.h"
 #include "knowhere/log.h"
+#include "knowhere/operands.h"
 
 namespace knowhere::sparse::inverted {
 
 inline constexpr uint32_t kInvertedIndexFileFormatVersion = 1;
-inline constexpr size_t kInvertedIndexHeaderReservedBytes = 16;
-inline constexpr size_t kInvertedIndexFileHeaderSize = sizeof(uint32_t) * 4 + kInvertedIndexHeaderReservedBytes;
+inline constexpr size_t kInvertedIndexHeaderReservedBytes = 12;
+inline constexpr size_t kInvertedIndexFileHeaderSize = sizeof(uint32_t) * 5 + kInvertedIndexHeaderReservedBytes;
 inline constexpr size_t kInvertedIndexSectionCountSize = sizeof(uint32_t);
+
+static_assert(kInvertedIndexFileHeaderSize == 32);
+
+// The posting type consumes the first four bytes of the original reserved header.
+// Zero identifies legacy files that need build parameters or version defaults.
+inline constexpr size_t kInvertedIndexQuantTypeOffset = sizeof(uint32_t) * 4;
+enum class InvertedIndexQuantType : uint32_t {
+    UNSPECIFIED = 0,
+    IP_FP16 = 1,
+    IP_FP32 = 2,
+    BM25_U8 = 3,
+    BM25_U16 = 4,
+    BM25_U32 = 5,
+};
+
+static_assert(sizeof(InvertedIndexQuantType) == sizeof(uint32_t));
+
+template <typename QType>
+constexpr InvertedIndexQuantType
+posting_quant_type() {
+    if constexpr (std::is_same_v<QType, knowhere::fp16>) {
+        return InvertedIndexQuantType::IP_FP16;
+    } else if constexpr (std::is_same_v<QType, float>) {
+        return InvertedIndexQuantType::IP_FP32;
+    } else if constexpr (std::is_same_v<QType, uint8_t>) {
+        return InvertedIndexQuantType::BM25_U8;
+    } else if constexpr (std::is_same_v<QType, uint16_t>) {
+        return InvertedIndexQuantType::BM25_U16;
+    } else {
+        static_assert(std::is_same_v<QType, uint32_t>);
+        return InvertedIndexQuantType::BM25_U32;
+    }
+}
+
+template <typename QType>
+bool
+validate_posting_quant_type(InvertedIndexQuantType quant_type) {
+    return quant_type == InvertedIndexQuantType::UNSPECIFIED || quant_type == posting_quant_type<QType>();
+}
+
+inline std::optional<InvertedIndexQuantType>
+peek_quant_type_from_index_data(const uint8_t* data, size_t size) {
+    if (data == nullptr || size < kInvertedIndexFileHeaderSize) {
+        return std::nullopt;
+    }
+    InvertedIndexQuantType quant_type{};
+    std::memcpy(&quant_type, data + kInvertedIndexQuantTypeOffset, sizeof(quant_type));
+    return quant_type;
+}
 
 enum class InvertedIndexSectionType : uint32_t {
     POSTING_LISTS = 0,
@@ -27,6 +80,7 @@ enum class InvertedIndexSectionType : uint32_t {
     BLOCK_MAX_SCORES = 5,
     PROMETHEUS_BUILD_STATS = 6,
     DIM_MAP_MPHF = 7,
+    BM25_U8_OVERFLOWS = 8,
 };
 
 struct InvertedIndexSectionHeader {
@@ -56,6 +110,7 @@ align_section_offset(uint64_t offset, InvertedIndexSectionType type) {
         case InvertedIndexSectionType::POSTING_LISTS:
             return align_offset(offset + sizeof(uint32_t), alignof(size_t)) - sizeof(uint32_t);
         case InvertedIndexSectionType::DIM_MAP_REVERSE:
+        case InvertedIndexSectionType::BM25_U8_OVERFLOWS:
             return align_offset(offset, alignof(uint32_t));
         case InvertedIndexSectionType::ROW_SUMS:
         case InvertedIndexSectionType::MAX_SCORES_PER_DIM:
