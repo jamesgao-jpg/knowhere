@@ -192,6 +192,12 @@ KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM(bf_search_cnt, PROMETHEUS_LABEL_CARDINAL)
 KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM_FAMILY(re_search_cnt, "number of fallback search per request")
 KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM(re_search_cnt, PROMETHEUS_LABEL_CARDINAL)
 
+KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM_FAMILY(ood_route_latency, "OOD bucket routing latency (ms)")
+KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM_FAMILY(ivf_scanned_codes, "IVF scanned vectors per request")
+KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM_FAMILY(ivf_scanned_buckets, "IVF scanned buckets per request")
+KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM_FAMILY(ood_bf_compute_cnt, "OOD training-query comparisons per request")
+KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM_FAMILY(ood_learned_bucket_cnt, "OOD learned buckets per request")
+
 KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM_FAMILY(filter_connectivity_ratio,
                                             "avg connectivity ratio set under filtering per request")
 KNOWHERE_DEFINE_PROMETHEUS_HISTOGRAM(filter_connectivity_ratio, PROMETHEUS_LABEL_CARDINAL)
