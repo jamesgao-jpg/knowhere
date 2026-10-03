@@ -140,6 +140,8 @@ constexpr const char* EMB_LIST_STRATEGY_LEMUR = "lemur";
 // IndexNodeDataMockWrapper for the fp16/bf16 index variants.
 constexpr const char* TRAIN_QUERY_TENSOR = "train_query_tensor";
 constexpr const char* TRAIN_QUERY_ROWS = "train_query_rows";
+constexpr const char* TRAIN_QUERY_NEIGHBORS = "train_query_neighbors";
+constexpr const char* TRAIN_QUERY_NEIGHBORS_K = "train_query_neighbors_k";
 };  // namespace meta
 
 namespace indexparam {

@@ -232,6 +232,14 @@ data_type_conversion(const DataSet& src, const std::optional<int64_t> start = st
     if (train_queries != nullptr) {
         des->Set(knowhere::meta::TRAIN_QUERY_TENSOR, train_queries);
         des->Set(knowhere::meta::TRAIN_QUERY_ROWS, src.Get<int64_t>(knowhere::meta::TRAIN_QUERY_ROWS));
+        des->Set(
+            knowhere::meta::TRAIN_QUERY_NEIGHBORS,
+            src.Get<const int64_t*>(knowhere::meta::TRAIN_QUERY_NEIGHBORS)
+        );
+        des->Set(
+            knowhere::meta::TRAIN_QUERY_NEIGHBORS_K,
+            src.Get<int64_t>(knowhere::meta::TRAIN_QUERY_NEIGHBORS_K)
+        );
     }
     return des;
 }
