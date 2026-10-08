@@ -123,7 +123,20 @@ class Cluster {
     Assign(const DataSet& dataset) noexcept;
 
     expected<DataSetPtr>
+    Assign(const DataSet& dataset, const Json& json) noexcept;
+
+    expected<DataSetPtr>
+    AssignWithDistance(const DataSet& dataset, const Json& json) noexcept;
+
+    // Typed, owned plan; diagnostics are logged by the planner.
+    expected<CompactionResult>
+    BuildCompactionPlan(const std::vector<uint64_t>& centroid_counts, const Json& json) noexcept;
+
+    expected<DataSetPtr>
     GetCentroids() const noexcept;
+
+    Status
+    SetCentroids(const DataSet& centroids) noexcept;
 
     std::string
     Type() const noexcept;

@@ -58,6 +58,7 @@ constexpr const char* INDEX_HNSW = "HNSW";
 constexpr const char* INDEX_HNSW_SQ = "HNSW_SQ";
 constexpr const char* INDEX_HNSW_PQ = "HNSW_PQ";
 constexpr const char* INDEX_HNSW_PRQ = "HNSW_PRQ";
+constexpr const char* INDEX_HNSW_RABITQ = "HNSW_RABITQ";
 
 constexpr const char* INDEX_DISKANN = "DISKANN";
 constexpr const char* INDEX_AISAQ = "AISAQ";
@@ -146,6 +147,7 @@ namespace indexparam {
 constexpr const char* NPROBE = "nprobe";
 constexpr const char* NLIST = "nlist";
 constexpr const char* USE_ELKAN = "use_elkan";
+constexpr const char* USE_SUPER_KMEANS = "use_super_kmeans";
 constexpr const char* NBITS = "nbits";          // PQ/SQ
 constexpr const char* M = "m";                  // PQ param for IVFPQ
 constexpr const char* IVF_SQ_TYPE = "sq_type";  // SQ param for IVFSQ
@@ -244,6 +246,7 @@ constexpr const char* INVERTED_INDEX_ALGO = "inverted_index_algo";
 constexpr const char* DROP_RATIO_BUILD = "drop_ratio_build";
 constexpr const char* DROP_RATIO_SEARCH = "drop_ratio_search";
 constexpr const char* BULK_QUERY_NNZ_THRESHOLD = "bulk_query_nnz_threshold";
+constexpr const char* BM25_U8_MAX_OVERFLOW_RATIO = "bm25_u8_max_overflow_ratio";
 
 // RaBitQ Params
 constexpr const char* RABITQ_BITS = "rbq_bits";
